@@ -1,0 +1,12 @@
+name: "Test Time Add-On"
+version: "1.0.0"
+slug: "test_time_addon"
+description: "A minimal add-on that logs the current time."
+arch:
+  - amd64
+  - armv7
+startup: application
+boot: auto
+image: "local/test_time_addon"
+options: {}
+schema: {}
