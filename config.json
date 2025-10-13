@@ -1,0 +1,17 @@
+{
+  "name": "test-time-addons",
+  "version": "0.1.0",
+  "slug": "test_time_addon",
+  "description": "Minimal add-on that prints current time",
+  "arch": ["armv7", "armhf", "aarch64", "amd64"],
+  "startup": "application",
+  "boot": "auto",
+  "host_dbus": false,
+  "options": {},
+  "schema": {},
+  "map": ["config"],
+  "privileged": false,
+  "homeassistant": "2023.12.0",
+  "ingress": false,
+  "image": "local/test_time_addon"
+}
