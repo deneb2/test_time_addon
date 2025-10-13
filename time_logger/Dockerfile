@@ -1,4 +1,5 @@
-FROM ghcr.io/hassio-addons/base:latest
+# Use the appropriate base image for Raspberry Pi 4
+FROM homeassistant/arm64-base:latest
 
 RUN apk add --no-cache bash
 
