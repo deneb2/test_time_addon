@@ -9,6 +9,6 @@ arch:
   - aarch64
 startup: application
 boot: auto
-image: "local/time_logger"
+# image: "local/time_logger"
 options: {}
 schema: {}
