@@ -2,13 +2,14 @@ name: "Time Logger Add-On"
 version: "1.0.0"
 slug: "time_logger"
 description: "A minimal add-on that logs the current time."
+init: false
 arch:
   - amd64
   - armv7
   - armhf
   - aarch64
-startup: application
-boot: auto
+# startup: application
+# boot: auto
 # image: "local/time_logger"
-options: {}
-schema: {}
+#options: {}
+#schema: {}
