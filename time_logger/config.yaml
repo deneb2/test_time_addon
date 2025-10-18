@@ -11,5 +11,9 @@ arch:
 # startup: application
 # boot: auto
 # image: "local/time_logger"
-#options: {}
-#schema: {}
+options:
+  mqtt_user: "default_user"
+  mqtt_pass: "default_password"
+schema:
+  mqtt_user: str
+  mqtt_pass: str
