@@ -10,6 +10,8 @@ MQTT_PASS="${ADDON_MQTT_PASS:-test}"
 while true; do
   TIMESTAMP="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
   echo "$TIMESTAMP"
+  echo "host: $MQTT_HOST, user: $MQTT_USER, password: $MQTT_PASS, topic: $MQTT_TOPIC"
+  
   # Publish the timestamp to the MQTT topic
   mosquitto_pub -h "$MQTT_HOST" -u "$MQTT_USER" -P "$MQTT_PASS" -t "$MQTT_TOPIC" -m "$TIMESTAMP"
   sleep 10
