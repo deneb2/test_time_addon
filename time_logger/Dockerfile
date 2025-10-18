@@ -1,6 +1,6 @@
 FROM ghcr.io/hassio-addons/base:14.0.2
 
-RUN apk add --no-cache bash
+RUN apk add --no-cache bash mosquitto-clients
 
 COPY run.sh /run.sh
 
