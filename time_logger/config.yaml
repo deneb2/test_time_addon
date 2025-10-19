@@ -1,5 +1,5 @@
 name: "Time Logger Add-On"
-version: "1.0.5"
+version: "1.0.6"
 slug: "time_logger"
 description: "A minimal add-on that logs the current time."
 init: false
@@ -8,15 +8,18 @@ arch:
   - armv7
   - armhf
   - aarch64
-# startup: application
-# boot: auto
-# image: "local/time_logger"
+
 options:
-  mqtt_host: "localhost"
-  mqtt_user: "default_user"
-  mqtt_pass: "default_password"
+  mqtt_host: "localhost"           # Default MQTT host
+  mqtt_port: 1883                  # Default MQTT port
+  mqtt_user: "default_user"        # Default MQTT username
+  mqtt_pass: "default_password"    # Default MQTT password
+  mqtt_topic: "home/time_logger"   # Default MQTT topic
+
 schema:
   mqtt_host: str
+  mqtt_port: int
   mqtt_user: str
   mqtt_pass: str
+  mqtt_topic: str
   

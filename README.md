@@ -24,11 +24,12 @@ To install the Time Logger add-on in Home Assistant OS (HAOS), follow these step
    - Click on it and then click on the **Install** button.
 
 3. **Configure the Add-On**:
-   - After installation, navigate to the **Configuration** tab.
-   - Set the following options:
-     - `mqtt_host`: The hostname of your MQTT broker (default is `localhost`, check on mosquitto plug-in info page to see the hostname).
-     - `mqtt_user`: Your MQTT username.
-     - `mqtt_pass`: Your MQTT password.
+   After installation, navigate to the **Configuration** tab. Set the following options:
+   - `mqtt_host`: The hostname of your MQTT broker (default is `localhost`).
+   - `mqtt_port`: The port of your MQTT broker (default is `1883`).
+   - `mqtt_user`: Your MQTT username.
+   - `mqtt_pass`: Your MQTT password.
+   - `mqtt_topic`: The topic to publish the timestamp (default is `home/time_logger`).
    - Click **Save**.
 
 4. **Start the Add-On**:
