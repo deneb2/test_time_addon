@@ -1,5 +1,5 @@
 name: "Time Logger Add-On"
-version: "1.0.19"
+version: "1.0.20"
 slug: "time_logger"
 description: "A minimal add-on that logs the current time."
 init: false

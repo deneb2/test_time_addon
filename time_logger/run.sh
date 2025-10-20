@@ -37,7 +37,11 @@ while true; do
 
       bashio::log.info "$MESSAGE"
       mosquitto_pub -h "$MQTT_HOST" -p "$MQTT_PORT" -u "$MQTT_USER" -P "$MQTT_PASS" -t "$MQTT_TOPIC" -m "$MESSAGE"
+    else
+      # Print the line if it doesn't match the MISSED_CALL message
+      bashio::log.info "Other message: $line"
     fi
+    
   done
 
   bashio::log.warning "Restarting in 10 seconds..."
