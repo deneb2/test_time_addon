@@ -1,5 +1,5 @@
 name: "Time Logger Add-On"
-version: "1.0.10"
+version: "1.0.11"
 slug: "time_logger"
 description: "A minimal add-on that logs the current time."
 init: false
@@ -26,8 +26,8 @@ schema:
 
 # Add permissions for D-Bus and devices
 host_dbus: true
-full_access: true
-host_network: true
+# full_access: true
+# host_network: true
 devices:
   - /dev/bus/usb
   - /dev/ttyACM*

@@ -14,17 +14,25 @@ MQTT_TOPIC=$(bashio::config 'mqtt_topic')
 : "${MQTT_PASS:="default_password"}"
 : "${MQTT_TOPIC:="home/time_logger"}"
 
-while true; do
-  MODEM_PATH=$(mmcli -L | grep -o '/org/freedesktop/ModemManager1/Modem/[0-9]*')
+# Wait for NetworkManager to detect and configure the device
+bashio::log.info "Waiting for NetworkManager to detect the modem..."
+sleep 30
 
-  if [ -z "$MODEM_PATH" ]; then
-      bashio::log.info "No modem found."
+bashio::log.info "Listening for network device changes from NetworkManager."
+
+# Monitor D-Bus for NetworkManager device signals
+# Use nmcli to verify device status
+while true; do
+  # Find the modem device using nmcli
+  MODEM_DBUS_PATH=$(nmcli -t -f DEVICE,TYPE,DBUS_PATH device | grep -E 'modem' | awk -F: '{print $3}')
+
+  if [ -z "$MODEM_DBUS_PATH" ]; then
+      bashio::log.info "No modem found via NetworkManager."
       MESSAGE="No modem detected."
   else
-      bashio::log.info "Modem found: $MODEM_PATH"
-      MESSAGE="Modem detected at $MODEM_PATH"
+      bashio::log.info "Modem detected at D-Bus path: $MODEM_DBUS_PATH"
+      MESSAGE="Modem detected and being managed by NetworkManager at $MODEM_DBUS_PATH"
   fi
-
 
   echo "host: $MQTT_HOST, port: $MQTT_PORT, user: $MQTT_USER, password: $MQTT_PASS, topic: $MQTT_TOPIC, message: $MESSAGE"
 
