@@ -23,8 +23,8 @@ bashio::log.info "Listening for network device changes from NetworkManager."
 # Monitor D-Bus for NetworkManager device signals
 # Use nmcli to verify device status
 while true; do
-  # Find the modem device using nmcli
-  MODEM_DBUS_PATH=$(nmcli -t -f DEVICE,TYPE,DBUS_PATH device | grep -E 'modem' | awk -F: '{print $3}')
+    # Find the modem device using nmcli
+  MODEM_DBUS_PATH=$(nmcli -t -f DEVICE,TYPE,DBUS-PATH device | grep -E 'wwan|modem' | awk -F: '{print $3}')
 
   if [ -z "$MODEM_DBUS_PATH" ]; then
       bashio::log.info "No modem found via NetworkManager."
