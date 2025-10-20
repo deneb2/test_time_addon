@@ -16,33 +16,30 @@ SERIAL_PORT=$(bashio::config 'serial_port')
 : "${MQTT_TOPIC:="home/time_logger"}"
 : "${SERIAL_PORT:="/dev/ttyUSB2"}"
 
+# Loop forever to ensure the service stays running and restarts the monitor if needed
+while true; do
+  # Wait for the serial port to become available
+  while [ ! -c "$SERIAL_PORT" ]; do
+      bashio::log.info "Serial port $SERIAL_PORT not found. Retrying in 5 seconds..."
+      sleep 5
+  done
 
-# Retry loop to wait for the serial port to become available
-MAX_RETRIES=2
-RETRY_COUNT=0
-while [ ! -c "$SERIAL_PORT" ] && [ "$RETRY_COUNT" -lt "$MAX_RETRIES" ]; do
-    bashio::log.info "Serial port $SERIAL_PORT not found. Retrying in 5 seconds..."
-    sleep 5
-    RETRY_COUNT=$((RETRY_COUNT + 1))
-done
+  bashio::log.info "Listening for modem events on $SERIAL_PORT"
 
-if [ ! -c "$SERIAL_PORT" ]; then
-    bashio::log.fatal "Serial port $SERIAL_PORT not found. Please check your add-on configuration and ensure the modem is connected."
-    exit 1
-fi
+  # Start the socat monitor. If it exits, the outer while loop will restart it.
+  socat "$SERIAL_PORT,raw,echo=0" - | while IFS= read -r line; do
+    bashio::log.info "Received: $line"
 
-bashio::log.info "Listening for modem events on $SERIAL_PORT"
+    # Check for the MISSED_CALL message
+    if [[ "$line" =~ MISSED_CALL:.*([+][0-9]+) ]]; then
+      CALLER_NUMBER="${BASH_REMATCH[1]}"
+      MESSAGE="Missed call from: $CALLER_NUMBER"
 
-# Use socat to monitor the serial port and pipe output to a while loop
-socat "$SERIAL_PORT,raw,echo=0" - | while IFS= read -r line; do
-  bashio::log.info "Received: $line"
+      bashio::log.info "$MESSAGE"
+      mosquitto_pub -h "$MQTT_HOST" -p "$MQTT_PORT" -u "$MQTT_USER" -P "$MQTT_PASS" -t "$MQTT_TOPIC" -m "$MESSAGE"
+    fi
+  done
 
-  # Check for the MISSED_CALL message
-  if [[ "$line" =~ MISSED_CALL:.*(+[0-9]+) ]]; then
-    CALLER_NUMBER="${BASH_REMATCH[1]}"
-    MESSAGE="Missed call from: $CALLER_NUMBER"
-
-    bashio::log.info "host: $MQTT_HOST, port: $MQTT_PORT, user: $MQTT_USER, password: $MQTT_PASS, topic: $MQTT_TOPIC, message: $MESSAGE"
-    mosquitto_pub -h "$MQTT_HOST" -p "$MQTT_PORT" -u "$MQTT_USER" -P "$MQTT_PASS" -t "$MQTT_TOPIC" -m "$MESSAGE"
-  fi
+  bashio::log.warning "Serial port monitor terminated unexpectedly. Restarting in 5 seconds..."
+  sleep 5
 done
