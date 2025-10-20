@@ -28,11 +28,11 @@ schema:
 
 # Add permissions for D-Bus and devices
 host_dbus: true
-# full_access: true
+full_access: true
 # host_network: true
 devices:
   - /dev/bus/usb
   - /dev/ttyACM*
   - /dev/ttyUSB*
 
-privileged: true
+#privileged: true
