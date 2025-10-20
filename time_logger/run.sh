@@ -16,7 +16,6 @@ SERIAL_PORT=$(bashio::config 'serial_port')
 : "${MQTT_TOPIC:="home/time_logger"}"
 : "${SERIAL_PORT:="/dev/ttyUSB2"}"
 
-# Loop forever to ensure the service stays running and restarts the monitor if needed
 while true; do
   # Wait for the serial port to become available
   while [ ! -c "$SERIAL_PORT" ]; do
@@ -25,6 +24,9 @@ while true; do
   done
 
   bashio::log.info "Listening for modem events on $SERIAL_PORT"
+
+  # Set the modem to text mode
+  echo -e "AT+CMGF=1\r" > "$SERIAL_PORT"  # Add this line here
 
   # Start the socat monitor. If it exits, the outer while loop will restart it.
   socat "$SERIAL_PORT,raw,echo=0" - | while IFS= read -r line; do
@@ -37,11 +39,20 @@ while true; do
 
       bashio::log.info "$MESSAGE"
       mosquitto_pub -h "$MQTT_HOST" -p "$MQTT_PORT" -u "$MQTT_USER" -P "$MQTT_PASS" -t "$MQTT_TOPIC" -m "$MESSAGE"
+
+    # Check for the +CMTI message to read SMS
+    elif [[ "$line" =~ \+CMTI:.* ]]; then
+      INDEX=$(echo "$line" | grep -o '[0-9]\+$')
+      echo -e "AT+CMGR=$INDEX\r" > "$SERIAL_PORT"
+      sleep 1
+      response=$(cat "$SERIAL_PORT")
+      bashio::log.info "SMS Content: $response"
+
+      mosquitto_pub -h "$MQTT_HOST" -p "$MQTT_PORT" -u "$MQTT_USER" -P "$MQTT_PASS" -t "$MQTT_TOPIC" -m "SMS Content: $response"
+
     else
-      # Print the line if it doesn't match the MISSED_CALL message
       bashio::log.info "Other message: $line"
     fi
-    
   done
 
   bashio::log.warning "Restarting in 10 seconds..."
