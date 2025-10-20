@@ -15,6 +15,7 @@ options:
   mqtt_user: "default_user"        # Default MQTT username
   mqtt_pass: "default_password"    # Default MQTT password
   mqtt_topic: "home/time_logger"   # Default MQTT topic
+  serial_port: "/dev/ttyUSB2"
 
 schema:
   mqtt_host: str
@@ -22,6 +23,7 @@ schema:
   mqtt_user: str
   mqtt_pass: str
   mqtt_topic: str
+  serial_port:  str
 
 
 # Add permissions for D-Bus and devices
@@ -31,3 +33,4 @@ host_dbus: true
 devices:
   - /dev/bus/usb
   - /dev/ttyACM*
+  - /dev/ttyUSB*

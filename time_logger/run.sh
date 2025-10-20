@@ -6,6 +6,7 @@ MQTT_PORT=$(bashio::config 'mqtt_port')
 MQTT_USER=$(bashio::config 'mqtt_user')
 MQTT_PASS=$(bashio::config 'mqtt_pass')
 MQTT_TOPIC=$(bashio::config 'mqtt_topic')
+SERIAL_PORT=$(bashio::config 'serial_port')
 
 # Optional: Set default values if the configuration is not available
 : "${MQTT_HOST:="localhost"}"
@@ -13,30 +14,35 @@ MQTT_TOPIC=$(bashio::config 'mqtt_topic')
 : "${MQTT_USER:="default_user"}"
 : "${MQTT_PASS:="default_password"}"
 : "${MQTT_TOPIC:="home/time_logger"}"
+: "${SERIAL_PORT:="/dev/ttyUSB2"}"
 
-# Wait for NetworkManager to detect and configure the device
-bashio::log.info "Waiting for NetworkManager to detect the modem..."
-sleep 30
 
-bashio::log.info "Listening for network device changes from NetworkManager."
+# Retry loop to wait for the serial port to become available
+MAX_RETRIES=2
+RETRY_COUNT=0
+while [ ! -c "$SERIAL_PORT" ] && [ "$RETRY_COUNT" -lt "$MAX_RETRIES" ]; do
+    bashio::log.info "Serial port $SERIAL_PORT not found. Retrying in 5 seconds..."
+    sleep 5
+    RETRY_COUNT=$((RETRY_COUNT + 1))
+done
 
-# Monitor D-Bus for NetworkManager device signals
-# Use nmcli to verify device status
-while true; do
-    # Find the modem device using nmcli
-  MODEM_DBUS_PATH=$(nmcli -t -f DEVICE,TYPE,DBUS-PATH device | grep -E 'wwan|modem' | awk -F: '{print $3}')
+if [ ! -c "$SERIAL_PORT" ]; then
+    bashio::log.fatal "Serial port $SERIAL_PORT not found. Please check your add-on configuration and ensure the modem is connected."
+    exit 1
+fi
 
-  if [ -z "$MODEM_DBUS_PATH" ]; then
-      bashio::log.info "No modem found via NetworkManager."
-      MESSAGE="No modem detected."
-  else
-      bashio::log.info "Modem detected at D-Bus path: $MODEM_DBUS_PATH"
-      MESSAGE="Modem detected and being managed by NetworkManager at $MODEM_DBUS_PATH"
+bashio::log.info "Listening for modem events on $SERIAL_PORT"
+
+# Use socat to monitor the serial port and pipe output to a while loop
+socat "$SERIAL_PORT,raw,echo=0" - | while IFS= read -r line; do
+  bashio::log.info "Received: $line"
+
+  # Check for the MISSED_CALL message
+  if [[ "$line" =~ MISSED_CALL:.*(+[0-9]+) ]]; then
+    CALLER_NUMBER="${BASH_REMATCH[1]}"
+    MESSAGE="Missed call from: $CALLER_NUMBER"
+
+    bashio::log.info "host: $MQTT_HOST, port: $MQTT_PORT, user: $MQTT_USER, password: $MQTT_PASS, topic: $MQTT_TOPIC, message: $MESSAGE"
+    mosquitto_pub -h "$MQTT_HOST" -p "$MQTT_PORT" -u "$MQTT_USER" -P "$MQTT_PASS" -t "$MQTT_TOPIC" -m "$MESSAGE"
   fi
-
-  echo "host: $MQTT_HOST, port: $MQTT_PORT, user: $MQTT_USER, password: $MQTT_PASS, topic: $MQTT_TOPIC, message: $MESSAGE"
-
-  # Publish the timestamp to the MQTT topic
-  mosquitto_pub -h "$MQTT_HOST" -p "$MQTT_PORT" -u "$MQTT_USER" -P "$MQTT_PASS" -t "$MQTT_TOPIC" -m "$MESSAGE"
-  sleep 10
 done
