@@ -1,5 +1,5 @@
 name: "Time Logger Add-On"
-version: "1.0.15"
+version: "1.0.16"
 slug: "time_logger"
 description: "A minimal add-on that logs the current time."
 init: false
@@ -15,7 +15,7 @@ options:
   mqtt_user: "default_user"        # Default MQTT username
   mqtt_pass: "default_password"    # Default MQTT password
   mqtt_topic: "home/time_logger"   # Default MQTT topic
-  serial_port: "/dev/ttyUSB2"
+  serial_port: "/dev/ttyUSB2"      # Default Serial Port
 
 schema:
   mqtt_host: str
@@ -28,11 +28,11 @@ schema:
 
 # Add permissions for D-Bus and devices
 host_dbus: true
-full_access: true
+#full_access: true
 # host_network: true
 devices:
   - /dev/bus/usb
   - /dev/ttyACM*
-  - /dev/ttyUSB*
+#  - /dev/ttyUSB*
 
 #privileged: true
