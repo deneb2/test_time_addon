@@ -16,6 +16,18 @@ SERIAL_PORT=$(bashio::config 'serial_port')
 : "${MQTT_TOPIC:="home/time_logger"}"
 : "${SERIAL_PORT:="/dev/ttyUSB2"}"
 
+
+# Set the modem to text mode
+echo -e "AT+CMGF=1\r" > "$SERIAL_PORT"
+sleep 1
+response=$(cat "$SERIAL_PORT")
+  
+if [[ "$response" =~ OK ]]; then
+    bashio::log.info "Modem set to text mode."
+else
+    bashio::log.warning "Failed to set modem to text mode."
+fi
+
 while true; do
   # Wait for the serial port to become available
   while [ ! -c "$SERIAL_PORT" ]; do
@@ -24,9 +36,6 @@ while true; do
   done
 
   bashio::log.info "Listening for modem events on $SERIAL_PORT"
-
-  # Set the modem to text mode
-  echo -e "AT+CMGF=1\r" > "$SERIAL_PORT"  # Add this line here
 
   # Start the socat monitor. If it exits, the outer while loop will restart it.
   socat "$SERIAL_PORT,raw,echo=0" - | while IFS= read -r line; do
