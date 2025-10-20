@@ -20,13 +20,6 @@ SERIAL_PORT=$(bashio::config 'serial_port')
 # Set the modem to text mode
 echo -e "AT+CMGF=1\r" > "$SERIAL_PORT"
 sleep 1
-response=$(cat "$SERIAL_PORT")
-  
-if [[ "$response" =~ OK ]]; then
-    bashio::log.info "Modem set to text mode."
-else
-    bashio::log.warning "Failed to set modem to text mode."
-fi
 
 while true; do
   # Wait for the serial port to become available
