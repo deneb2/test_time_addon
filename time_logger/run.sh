@@ -7,6 +7,8 @@ MQTT_USER=$(bashio::config 'mqtt_user')
 MQTT_PASS=$(bashio::config 'mqtt_pass')
 MQTT_TOPIC=$(bashio::config 'mqtt_topic')
 
+export DBUS_SYSTEM_BUS_ADDRESS=unix:path=/host/run/dbus/system_bus_socket
+
 # Optional: Set default values if the configuration is not available
 : "${MQTT_HOST:="localhost"}"
 : "${MQTT_PORT:="1883"}"
