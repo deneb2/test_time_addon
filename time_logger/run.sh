@@ -15,11 +15,20 @@ MQTT_TOPIC=$(bashio::config 'mqtt_topic')
 : "${MQTT_TOPIC:="home/time_logger"}"
 
 while true; do
-  TIMESTAMP="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-  echo "$TIMESTAMP"
-  echo "host: $MQTT_HOST, port: $MQTT_PORT, user: $MQTT_USER, password: $MQTT_PASS, topic: $MQTT_TOPIC"
-  
+  MODEM_PATH=$(mmcli -L | grep -o '/org/freedesktop/ModemManager1/Modem/[0-9]*')
+
+  if [ -z "$MODEM_PATH" ]; then
+      bashio::log.info "No modem found."
+      MESSAGE="No modem detected."
+  else
+      bashio::log.info "Modem found: $MODEM_PATH"
+      MESSAGE="Modem detected at $MODEM_PATH"
+  fi
+
+
+  echo "host: $MQTT_HOST, port: $MQTT_PORT, user: $MQTT_USER, password: $MQTT_PASS, topic: $MQTT_TOPIC, message: $MESSAGE"
+
   # Publish the timestamp to the MQTT topic
-  mosquitto_pub -h "$MQTT_HOST" -p "$MQTT_PORT" -u "$MQTT_USER" -P "$MQTT_PASS" -t "$MQTT_TOPIC" -m "$TIMESTAMP"
+  mosquitto_pub -h "$MQTT_HOST" -p "$MQTT_PORT" -u "$MQTT_USER" -P "$MQTT_PASS" -t "$MQTT_TOPIC" -m "$MESSAGE"
   sleep 10
 done

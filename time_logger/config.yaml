@@ -1,5 +1,5 @@
 name: "Time Logger Add-On"
-version: "1.0.6"
+version: "1.0.7"
 slug: "time_logger"
 description: "A minimal add-on that logs the current time."
 init: false
@@ -22,4 +22,10 @@ schema:
   mqtt_user: str
   mqtt_pass: str
   mqtt_topic: str
-  
+
+
+# Add permissions for D-Bus and devices
+host_dbus: true
+devices:
+  - /dev/bus/usb
+  - /dev/ttyACM*
