@@ -25,20 +25,21 @@ while true; do
   done
 
   bashio::log.info "Listening for modem events on $SERIAL_PORT"
+  (
+      # Start the socat monitor. If it exits, the outer while loop will restart it.
+      socat "$SERIAL_PORT,raw,echo=0" - | while IFS= read -r line; do
+          bashio::log.info "Received: $line"
 
-  # Start the socat monitor. If it exits, the outer while loop will restart it.
-  socat "$SERIAL_PORT,raw,echo=0" - | while IFS= read -r line; do
-    bashio::log.info "Received: $line"
+          # Check for the MISSED_CALL message
+          if [[ "$line" =~ MISSED_CALL:.*([+][0-9]+) ]]; then
+              CALLER_NUMBER="${BASH_REMATCH[1]}"
+              MESSAGE="Missed call from: $CALLER_NUMBER"
 
-    # Check for the MISSED_CALL message
-    if [[ "$line" =~ MISSED_CALL:.*([+][0-9]+) ]]; then
-      CALLER_NUMBER="${BASH_REMATCH[1]}"
-      MESSAGE="Missed call from: $CALLER_NUMBER"
-
-      bashio::log.info "$MESSAGE"
-      mosquitto_pub -h "$MQTT_HOST" -p "$MQTT_PORT" -u "$MQTT_USER" -P "$MQTT_PASS" -t "$MQTT_TOPIC" -m "$MESSAGE"
-    fi
-  done
+              bashio::log.info "$MESSAGE"
+              mosquitto_pub -h "$MQTT_HOST" -p "$MQTT_PORT" -u "$MQTT_USER" -P "$MQTT_PASS" -t "$MQTT_TOPIC" -m "$MESSAGE"
+          fi
+      done
+  )
 
   bashio::log.warning "Serial port monitor terminated unexpectedly. Restarting in 5 seconds..."
   sleep 5
