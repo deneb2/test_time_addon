@@ -8,7 +8,9 @@ The add-on is designed to integrate modem functionality (missed call detection, 
 - **Modem Event Monitoring**: Detects missed calls from connected GSM modem and publishes to MQTT
 - **SMS Sending**: Send SMS messages via MQTT commands from Home Assistant automations
 - **Status Feedback**: Publishes SMS delivery status back to MQTT
-- **Serial Port Management**: Intelligent locking to prevent conflicts between monitoring and sending
+- **Unified Gammu Architecture**: Single tool for all modem operations - no serial port conflicts
+- **Call Deduplication**: Tracks processed calls to avoid duplicate notifications
+- **Extensible**: Foundation ready for SMS receiving (future feature)
 - Easy to configure through the Home Assistant GUI
 
 ## Installation Instructions
@@ -341,17 +343,27 @@ mode: queued
 
 ### Conflicts with Other Add-ons
 
-This add-on uses a polling pattern to prevent conflicts when accessing the serial port. If you experience issues:
+This add-on uses Gammu exclusively for all serial port access. If you experience issues:
 1. Don't run multiple add-ons that access the same serial port simultaneously
 2. Check add-on logs for Gammu errors or serial port access issues
-3. Verify only one process is accessing the serial port at a time
+3. Verify your modem supports `getcalllog` (most GSM modems do)
+4. Check call log manually: `gammu -c /tmp/gammurc getcalllog`
+
+### Modem Doesn't Support Call Logs
+
+If you see "Function not supported" for call logs:
+1. Your modem may not support this feature
+2. Consider using a different modem model
+3. Or contact maintainer for alternative implementation
 
 ## Technical Details
 
-- **Modem Communication**: Uses `socat` for event monitoring and `gammu` for SMS sending
+- **Modem Communication**: Uses `gammu` for all modem operations (call monitoring + SMS sending)
 - **Polling Pattern**: Checks for SMS to send (~priority) then polls modem every ~10 seconds
 - **Queue System**: File-based queue at `/tmp/sms_queue` for reliable SMS handling
-- **No Conflicts**: Sequential access - only one operation touches serial port at a time
+- **No Conflicts**: Only Gammu accesses serial port - eliminates data consumption conflicts
+- **Call Detection**: Uses `gammu getcalllog` to check for missed calls
+- **Deduplication**: Tracks processed calls in `/tmp/processed_calls` to avoid duplicates
 - **SMS Format**: JSON payload with `number` and `message` fields
 - **Status Feedback**: Publishes success/failure status to MQTT after each SMS attempt
-- **Modem Buffering**: Modem buffers missed call notifications, delivered when polled
+- **Extensible**: Ready for SMS receiving implementation (just uncomment function)
