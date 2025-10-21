@@ -1,7 +1,7 @@
 name: "Time Logger Add-On"
-version: "1.0.24"
+version: "1.1.0"
 slug: "time_logger"
-description: "A minimal add-on that logs the current time."
+description: "Modem monitor with SMS sending capability via MQTT."
 init: false
 arch:
   - amd64
