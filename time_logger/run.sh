@@ -17,9 +17,9 @@ SERIAL_PORT=$(bashio::config 'serial_port')
 : "${SERIAL_PORT:="/dev/ttyUSB2"}"
 
 
-# Set the modem to text mode
-echo -e "AT+CMGF=1\r" > "$SERIAL_PORT"
-sleep 1
+# Set the modem to text mode - THIS MAY BE USEFUL FOR SMS, BUT NOT WORKING SO FAR
+# echo -e "AT+CMGF=1\r" > "$SERIAL_PORT"
+# sleep 1
 
 while true; do
   # Wait for the serial port to become available
@@ -42,15 +42,16 @@ while true; do
       bashio::log.info "$MESSAGE"
       mosquitto_pub -h "$MQTT_HOST" -p "$MQTT_PORT" -u "$MQTT_USER" -P "$MQTT_PASS" -t "$MQTT_TOPIC" -m "$MESSAGE"
 
-    # Check for the +CMTI message to read SMS
-    elif [[ "$line" =~ \+CMTI:.* ]]; then
-      INDEX=$(echo "$line" | grep -o '[0-9]\+$')
-      echo -e "AT+CMGR=$INDEX\r" > "$SERIAL_PORT"
-      sleep 1
-      response=$(cat "$SERIAL_PORT")
-      bashio::log.info "SMS Content: $response"
+      # Check for the +CMTI message to read SMS -
+      # NOT WORKING YET
+    # elif [[ "$line" =~ \+CMTI:.* ]]; then
+    #   INDEX=$(echo "$line" | grep -o '[0-9]\+$')
+    #   echo -e "AT+CMGR=$INDEX\r" > "$SERIAL_PORT"
+    #   sleep 1
+    #   response=$(cat "$SERIAL_PORT")
+    #   bashio::log.info "SMS Content: $response"
 
-      mosquitto_pub -h "$MQTT_HOST" -p "$MQTT_PORT" -u "$MQTT_USER" -P "$MQTT_PASS" -t "$MQTT_TOPIC" -m "SMS Content: $response"
+    #   mosquitto_pub -h "$MQTT_HOST" -p "$MQTT_PORT" -u "$MQTT_USER" -P "$MQTT_PASS" -t "$MQTT_TOPIC" -m "SMS Content: $response"
 
     else
       bashio::log.info "Other message: $line"
