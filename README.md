@@ -260,7 +260,7 @@ mode: queued
 1. Check the add-on logs for error messages
 2. Verify your modem is connected and shows up as `/dev/ttyUSBx`
 3. Ensure the serial port in configuration matches your modem
-4. Test modem connectivity: `gammu --config /etc/gammu-smsdrc identify`
+4. Test modem connectivity: `gammu --device /dev/ttyUSB2 --connection at identify`
 5. Check MQTT broker connection
 
 ### Modem Not Detected
