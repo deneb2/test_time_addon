@@ -52,9 +52,9 @@ The add-on uses the following MQTT topics (assuming `mqtt_topic` is set to `home
 
 ## Sending SMS from Home Assistant
 
-### Method 1: Direct MQTT Publish
+### Method 1: Direct MQTT Publish (Simplest)
 
-Use the `mqtt.publish` service in your automations:
+Use the `mqtt.publish` service directly in your automations:
 
 ```yaml
 alias: "Send SMS Alert"
@@ -76,16 +76,29 @@ actions:
 mode: single
 ```
 
-### Method 2: Create a Notify Service (Recommended)
+### Method 2: Create a Script for Reusability (Recommended)
 
-Add to your `configuration.yaml`:
+Add to your `scripts.yaml`:
 
 ```yaml
-notify:
-  - name: sms_modem
-    platform: mqtt
-    command_topic: "home/time_logger/send_sms"
-    payload: '{"number": "{{ target }}", "message": "{{ message }}"}'
+send_sms:
+  alias: "Send SMS via Modem"
+  fields:
+    phone_number:
+      description: "Phone number to send to"
+      example: "+1234567890"
+    sms_message:
+      description: "Message to send"
+      example: "Hello from Home Assistant"
+  sequence:
+    - action: mqtt.publish
+      data:
+        topic: "home/time_logger/send_sms"
+        payload: >
+          {
+            "number": "{{ phone_number }}",
+            "message": "{{ sms_message }}"
+          }
 ```
 
 Then use it in automations:
@@ -99,12 +112,49 @@ triggers:
     to: "on"
 conditions: []
 actions:
-  - action: notify.sms_modem
+  - action: script.send_sms
     data:
-      target: "+1234567890"
-      message: "Front door opened at {{ now().strftime('%H:%M') }}"
+      phone_number: "+1234567890"
+      sms_message: "Front door opened at {{ now().strftime('%H:%M') }}"
 mode: single
 ```
+
+### Method 3: Quick Test from Developer Tools
+
+Go to **Developer Tools → Services**:
+
+**Service:** `mqtt.publish`  
+**Service Data:**
+```yaml
+topic: home/time_logger/send_sms
+payload: '{"number": "+1234567890", "message": "Test from Home Assistant"}'
+```
+
+Click **"Call Service"** to send a test SMS!
+
+## Quick Reference
+
+### Send SMS in Automation (Copy-Paste Template)
+
+**IMPORTANT: Use single-line JSON format!**
+
+```yaml
+- action: mqtt.publish
+  data:
+    topic: "home/time_logger/send_sms"
+    payload: '{"number": "+1234567890", "message": "Your message here"}'
+```
+
+### Send SMS with Dynamic Content
+
+```yaml
+- action: mqtt.publish
+  data:
+    topic: "home/time_logger/send_sms"
+    payload: '{"number": "+1234567890", "message": "Alert at {{ now().strftime(''%H:%M'') }}: {{ trigger.to_state.state }}"}'
+```
+
+**Note:** Use `''` (two single quotes) to escape quotes inside single-quoted strings, OR use `>-` with proper JSON formatting on a single line.
 
 ## Automation Examples
 
@@ -147,8 +197,26 @@ actions:
       payload: >
         {
           "number": "+1234567890",
-          "message": "⚠️ Temperature alert! Living room: {{ states('sensor.living_room_temperature') }}°C at {{ now().strftime('%H:%M') }}"
+          "message": "Temperature alert! Living room: {{ states('sensor.living_room_temperature') }}°C at {{ now().strftime('%H:%M') }}"
         }
+mode: single
+```
+
+**Or using the script (if you created it):**
+
+```yaml
+alias: "High Temperature SMS Alert"
+description: "Send SMS when temperature is too high"
+triggers:
+  - trigger: numeric_state
+    entity_id: sensor.living_room_temperature
+    above: 30
+conditions: []
+actions:
+  - action: script.send_sms
+    data:
+      phone_number: "+1234567890"
+      sms_message: "Temperature alert! Living room: {{ states('sensor.living_room_temperature') }}°C"
 mode: single
 ```
 
@@ -171,7 +239,7 @@ actions:
       payload: >
         {
           "number": "+1234567890",
-          "message": "🚨 ALARM TRIGGERED at {{ now().strftime('%Y-%m-%d %H:%M:%S') }}! Check cameras immediately."
+          "message": "ALARM TRIGGERED at {{ now().strftime('%Y-%m-%d %H:%M:%S') }}! Check cameras."
         }
   - action: mqtt.publish
     data:
@@ -179,7 +247,7 @@ actions:
       payload: >
         {
           "number": "+0987654321",
-          "message": "🚨 ALARM TRIGGERED at {{ now().strftime('%Y-%m-%d %H:%M:%S') }}! Check cameras immediately."
+          "message": "ALARM TRIGGERED at {{ now().strftime('%Y-%m-%d %H:%M:%S') }}! Check cameras."
         }
 mode: single
 ```
@@ -260,8 +328,9 @@ mode: queued
 1. Check the add-on logs for error messages
 2. Verify your modem is connected and shows up as `/dev/ttyUSBx`
 3. Ensure the serial port in configuration matches your modem
-4. Test modem connectivity: `gammu --device /dev/ttyUSB2 --connection at identify`
+4. Test modem connectivity: `gammu -c /tmp/gammurc identify` (from inside the container)
 5. Check MQTT broker connection
+6. Check the queue file: `cat /tmp/sms_queue` (from inside the container)
 
 ### Modem Not Detected
 

@@ -20,6 +20,16 @@ SERIAL_PORT=$(bashio::config 'serial_port')
 SMS_QUEUE="/tmp/sms_queue"
 touch "$SMS_QUEUE"
 
+# Create Gammu configuration file
+GAMMU_CONFIG="/tmp/gammurc"
+cat > "$GAMMU_CONFIG" << EOF
+[gammu]
+device = $SERIAL_PORT
+connection = at
+EOF
+
+bashio::log.info "Gammu config created at $GAMMU_CONFIG for device $SERIAL_PORT"
+
 # Function to send next SMS from queue
 send_queued_sms() {
     if [ -s "$SMS_QUEUE" ]; then
@@ -30,9 +40,9 @@ send_queued_sms() {
         if [ -n "$number" ] && [ -n "$message" ]; then
             bashio::log.info "Sending SMS to $number"
             
-            # Send SMS using gammu with command-line parameters
+            # Send SMS using gammu with config file
             local result
-            result=$(echo "$message" | gammu --device "$SERIAL_PORT" --connection at sendsms TEXT "$number" 2>&1)
+            result=$(echo "$message" | gammu -c "$GAMMU_CONFIG" sendsms TEXT "$number" 2>&1)
             local exit_code=$?
             
             if [ $exit_code -eq 0 ]; then
